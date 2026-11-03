@@ -8,6 +8,7 @@ export function createApp({fetch: fetcher = globalThis.fetch, org = process.env.
   return http.createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    if (!/^(?:localhost|127\.0\.0\.1)(?::[0-9]+)?$/i.test(req.headers.host || '')) { res.writeHead(403).end(); return; }
     if (req.method !== 'GET') { res.writeHead(405).end(); return; }
     const path = new URL(req.url, 'http://localhost').pathname;
     if (path === '/api/activity') {

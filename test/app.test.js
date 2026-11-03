@@ -132,3 +132,27 @@ test('refresh preserves the last successful update and marks stale data after a 
   assert.notEqual(element('#updated').textContent, updated);
   assert.doesNotMatch(element('#status').textContent, /stale/);
 });
+
+test('partial GitHub authorization does not return fresh activity', async () => {
+  const app = await serve({org:'example', token:'secret', fetch: async () => new Response('[]', {headers:{'X-GitHub-SSO':'partial-results; organizations=123'}})});
+  try {
+    const response = await fetch(`${app.url}/api/activity`);
+    const body = await response.json();
+    assert.equal(response.status, 502);
+    assert.match(body.error, /authorization|permission/i);
+    assert.equal(body.updatedAt, undefined);
+  } finally { await app.close(); }
+});
+
+test('dashboard rejects requests with non-local hostnames', async () => {
+  const app = await serve({org:'example', token:'secret', fetch: async () => Response.json([])});
+  try {
+    const { request } = await import('node:http');
+    const status = await new Promise((resolve, reject) => {
+      const req = request(`${app.url}/api/activity`, {headers:{Host:'attacker.example'}}, res => { res.resume(); resolve(res.statusCode); });
+      req.on('error', reject);
+      req.end();
+    });
+    assert.equal(status, 403);
+  } finally { await app.close(); }
+});
