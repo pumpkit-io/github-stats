@@ -54,3 +54,45 @@ test('a failed repository fetch does not return partial activity', async () => {
     assert.ok(!JSON.stringify(body).includes('secret'));
   } finally { await app.close(); }
 });
+
+test('dashboard filters created and merged activity across a selected UTC date range', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const vm = await import('node:vm');
+  const elements = new Map();
+  function element(id) {
+    if (!elements.has(id)) elements.set(id, {value:'', textContent:'', innerHTML:'', hidden:false, disabled:false, listeners:{}, replaceChildren() {}, append() {}, addEventListener(type, fn) { this.listeners[type] = fn; }});
+    return elements.get(id);
+  }
+  const document = {querySelector: selector => element(selector), querySelectorAll: () => [], createElement: () => ({})};
+  const data = {repositories:[{name:'one'},{name:'two'}], pullRequests:[
+    {repository:'one', createdAt:'2026-01-01T23:00:00Z', mergedAt:'2026-01-03T00:00:00Z'},
+    {repository:'one', createdAt:'2026-01-03T00:00:00Z', mergedAt:null},
+    {repository:'two', createdAt:'2026-01-02T00:00:00Z', mergedAt:'2026-01-02T00:00:00Z'}
+  ], updatedAt:'2026-01-04T00:00:00Z'};
+  const context = vm.createContext({document, fetch: async () => ({ok:true, json:async () => data}), Date, Map, Math, Array, Number});
+  vm.runInContext(await readFile(new URL('../public/app.js', import.meta.url), 'utf8'), context);
+  await new Promise(resolve => setImmediate(resolve));
+  element('#repository').value = 'one';
+  element('#start').value = '2026-01-01';
+  element('#end').value = '2026-01-03';
+  element('#metric').value = 'created';
+  element('#repository').listeners.change();
+  assert.match(element('#counts').innerHTML, /2026-01-01<\/th><td>1<\/td><td>1/);
+  assert.match(element('#counts').innerHTML, /2026-01-02<\/th><td>0<\/td><td>1/);
+  assert.match(element('#counts').innerHTML, /2026-01-03<\/th><td>1<\/td><td>2/);
+  element('#metric').value = 'merged';
+  element('#metric').listeners.change();
+  assert.match(element('#counts').innerHTML, /2026-01-01<\/th><td>0<\/td><td>0/);
+  assert.match(element('#counts').innerHTML, /2026-01-03<\/th><td>1<\/td><td>1/);
+  element('#start').value = '2026-01-03';
+  element('#start').listeners.change();
+  assert.doesNotMatch(element('#counts').innerHTML, /2026-01-01/);
+  assert.match(element('#counts').innerHTML, /2026-01-03<\/th><td>1<\/td><td>1/);
+  element('#repository').value = 'two';
+  element('#repository').listeners.change();
+  assert.match(element('#status').textContent, /No pull requests were merged.*Choose another/);
+  element('#start').value = '2026-01-04';
+  element('#start').listeners.change();
+  assert.match(element('#status').textContent, /valid date range/);
+  assert.equal(element('#counts').innerHTML, '');
+});

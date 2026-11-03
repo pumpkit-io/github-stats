@@ -16,10 +16,15 @@
     <p class="coverage">Showing repositories accessible to your GitHub credentials. Check token permissions and organization access if a repository is missing.</p>
     <p id="status" role="status" aria-live="polite"></p>
     <section id="overview" hidden>
-      <div class="range"><span>All repositories</span><span>Created</span><span id="dates"></span></div>
-      <section class="chart"><div class="chart-heading"><div><h2>Daily pull requests</h2><p>Pull requests created each day</p></div><span class="key"><i class="blue"></i>Created</span></div><div id="daily"></div></section>
-      <section class="chart"><div class="chart-heading"><div><h2>Cumulative pull requests</h2><p>Running total within this period</p></div><span class="key"><i class="teal"></i>Created</span></div><div id="cumulative"></div></section>
-      <details><summary>View daily counts as a table</summary><table><thead><tr><th scope="col">Date (UTC)</th><th scope="col">Created</th><th scope="col">Cumulative</th></tr></thead><tbody id="counts"></tbody></table></details>
+      <div class="range">
+        <label>Repository<select id="repository"><option value="">All repositories</option></select></label>
+        <label>Count by<select id="metric"><option value="created">Created</option><option value="merged">Merged</option></select></label>
+        <label>From (UTC)<input id="start" type="date" min="1900-01-01" max="2100-12-31"></label>
+        <label>To (UTC)<input id="end" type="date" min="1900-01-01" max="2100-12-31"></label>
+      </div><p id="dates"></p>
+      <section class="chart"><div class="chart-heading"><div><h2>Daily pull requests</h2><p>Pull requests <span class="metric-name">created</span> each day</p></div><span class="key"><i class="blue"></i><span class="metric-name">Created</span></span></div><div id="daily"></div></section>
+      <section class="chart"><div class="chart-heading"><div><h2>Cumulative pull requests</h2><p>Running total within this period</p></div><span class="key"><i class="teal"></i><span class="metric-name">Created</span></span></div><div id="cumulative"></div></section>
+      <details><summary>View daily counts as a table</summary><table><thead><tr><th scope="col">Date (UTC)</th><th scope="col">Daily</th><th scope="col">Cumulative</th></tr></thead><tbody id="counts"></tbody></table></details>
     </section>
   </main>
 </body>
