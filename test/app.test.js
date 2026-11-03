@@ -96,3 +96,39 @@ test('dashboard filters created and merged activity across a selected UTC date r
   assert.match(element('#status').textContent, /valid date range/);
   assert.equal(element('#counts').innerHTML, '');
 });
+
+test('refresh preserves the last successful update and marks stale data after a failure', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const vm = await import('node:vm');
+  const elements = new Map();
+  function element(id) {
+    if (!elements.has(id)) elements.set(id, {value:'', textContent:'', innerHTML:'', hidden:false, disabled:false, listeners:{}, replaceChildren() {}, append() {}, addEventListener(type, fn) { this.listeners[type] = fn; }});
+    return elements.get(id);
+  }
+  const document = {querySelector: selector => element(selector), querySelectorAll: () => [], createElement: () => ({})};
+  const activity = {repositories:[{name:'one'}], pullRequests:[], updatedAt:'2026-01-04T00:00:00Z'};
+  let finish;
+  let request = 0;
+  const fetch = () => { request++; return new Promise(resolve => { finish = resolve; }); };
+  vm.runInContext(await readFile(new URL('../public/app.js', import.meta.url), 'utf8'), vm.createContext({document, fetch, Date, Map, Math, Array, Number}));
+  assert.match(element('#status').textContent, /Fetching/);
+  assert.equal(element('#refresh').disabled, true);
+  finish({ok:true, json:async () => activity});
+  await new Promise(resolve => setImmediate(resolve));
+  const updated = element('#updated').textContent;
+  assert.match(updated, /Last updated:/);
+  element('#refresh').listeners.click();
+  assert.equal(request, 2);
+  assert.match(element('#status').textContent, /Fetching/);
+  finish({ok:false, json:async () => ({error:'GitHub returned an incomplete response. Try again.'})});
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(element('#updated').textContent, updated);
+  assert.match(element('#status').textContent, /incomplete.*stale/);
+  element('#metric').listeners.change();
+  assert.match(element('#status').textContent, /stale/);
+  element('#refresh').listeners.click();
+  finish({ok:true, json:async () => ({...activity, updatedAt:'2026-01-05T00:00:00Z'})});
+  await new Promise(resolve => setImmediate(resolve));
+  assert.notEqual(element('#updated').textContent, updated);
+  assert.doesNotMatch(element('#status').textContent, /stale/);
+});

@@ -3,6 +3,8 @@ const updated = document.querySelector('#updated');
 const overview = document.querySelector('#overview');
 const refresh = document.querySelector('#refresh');
 let lastData;
+let refreshError = '';
+function setStatus(message) { status.textContent = [refreshError, message].filter(Boolean).join(' '); }
 const repository = document.querySelector('#repository');
 const metric = document.querySelector('#metric');
 const startInput = document.querySelector('#start');
@@ -34,7 +36,7 @@ function render(data) {
     document.querySelector('#cumulative').innerHTML = '';
     document.querySelector('#counts').innerHTML = '';
     document.querySelector('#dates').textContent = '';
-    status.textContent = 'Choose a valid date range of up to 10 years, with the start on or before the end.';
+    setStatus('Choose a valid date range of up to 10 years, with the start on or before the end.');
     return;
   }
   let total = 0;
@@ -55,7 +57,7 @@ function render(data) {
   document.querySelector('#cumulative').innerHTML = chart(points, true);
   document.querySelector('#counts').innerHTML = points.map(p => `<tr><th scope="row">${p.date}</th><td>${p.count}</td><td>${p.total}</td></tr>`).join('');
   overview.hidden = false;
-  status.textContent = total ? '' : `No pull requests were ${metric.value} for these filters. Choose another repository or date range.`;
+  setStatus(total ? '' : `No pull requests were ${metric.value} for these filters. Choose another repository or date range.`);
 }
 async function load() {
   refresh.disabled = true;
@@ -64,6 +66,7 @@ async function load() {
     const response = await fetch('/api/activity', {cache:'no-store'});
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Could not load GitHub data. Try again.');
+    refreshError = '';
     lastData = data;
     const selected = repository.value;
     repository.replaceChildren();
@@ -78,7 +81,8 @@ async function load() {
       status.textContent = 'No accessible repositories found. Check your organization and token permissions, then refresh.';
     } else render(data);
   } catch (error) {
-    status.textContent = `${error.message} ${lastData ? 'The charts show stale data from the last successful update.' : ''}`;
+    refreshError = `${error.message} ${lastData ? 'Displayed data is stale from the last successful update.' : ''}`;
+    setStatus('');
     if (!lastData) updated.textContent = 'No successful update yet.';
   } finally { refresh.disabled = false; }
 }
