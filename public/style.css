@@ -3,3 +3,5 @@
 .range label{display:flex;flex-direction:column;gap:6px;font-size:.85rem;font-weight:700}.range select,.range input{font:inherit;color:#20334a;background:#fff;border:1px solid #aabac9;border-radius:6px;padding:10px 12px;min-height:44px;max-width:100%}#dates{font-size:.85rem;color:#52677d;margin:0 0 20px}
 
 .line-point{fill:#16877f}
+
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px}.amber{background:#a15c00}.average{stroke:#a15c00;stroke-width:2;stroke-dasharray:6 4}
