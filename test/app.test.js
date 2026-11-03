@@ -156,3 +156,17 @@ test('dashboard rejects requests with non-local hostnames', async () => {
     assert.equal(status, 403);
   } finally { await app.close(); }
 });
+
+test('malformed request targets receive a bad request response without stopping the dashboard', async () => {
+  const app = await serve({});
+  try {
+    const { request } = await import('node:http');
+    const status = await new Promise((resolve, reject) => {
+      const req = request(app.url, {path:'http://[', headers:{Host:'localhost'}}, res => { res.resume(); resolve(res.statusCode); });
+      req.on('error', reject);
+      req.end();
+    });
+    assert.equal(status, 400);
+    assert.equal((await fetch(app.url)).status, 200);
+  } finally { await app.close(); }
+});

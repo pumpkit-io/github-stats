@@ -10,7 +10,9 @@ export function createApp({fetch: fetcher = globalThis.fetch, org = process.env.
     res.setHeader('X-Content-Type-Options', 'nosniff');
     if (!/^(?:localhost|127\.0\.0\.1)(?::[0-9]+)?$/i.test(req.headers.host || '')) { res.writeHead(403).end(); return; }
     if (req.method !== 'GET') { res.writeHead(405).end(); return; }
-    const path = new URL(req.url, 'http://localhost').pathname;
+    let path;
+    try { path = new URL(req.url, 'http://localhost').pathname; }
+    catch { res.writeHead(400).end(); return; }
     if (path === '/api/activity') {
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
       try {
