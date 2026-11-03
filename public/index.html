@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pull request activity</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><div><p class="context">Organization overview</p><h1>Pull request activity</h1><p id="updated">Loading current data from GitHub…</p></div><button id="refresh" type="button">Refresh</button></header>
+    <p class="coverage">Showing repositories accessible to your GitHub credentials. Check token permissions and organization access if a repository is missing.</p>
+    <p id="status" role="status" aria-live="polite"></p>
+    <section id="overview" hidden>
+      <div class="range"><span>All repositories</span><span>Created</span><span id="dates"></span></div>
+      <section class="chart"><div class="chart-heading"><div><h2>Daily pull requests</h2><p>Pull requests created each day</p></div><span class="key"><i class="blue"></i>Created</span></div><div id="daily"></div></section>
+      <section class="chart"><div class="chart-heading"><div><h2>Cumulative pull requests</h2><p>Running total within this period</p></div><span class="key"><i class="teal"></i>Created</span></div><div id="cumulative"></div></section>
+      <details><summary>View daily counts as a table</summary><table><thead><tr><th scope="col">Date (UTC)</th><th scope="col">Created</th><th scope="col">Cumulative</th></tr></thead><tbody id="counts"></tbody></table></details>
+    </section>
+  </main>
+</body>
+</html>
