@@ -14,17 +14,20 @@ const defaultStart = new Date(today); defaultStart.setUTCDate(defaultStart.getUT
 startInput.value = defaultStart.toISOString().slice(0,10);
 endInput.value = today.toISOString().slice(0,10);
 
-function chart(points, cumulative) {
-  const width = 960, height = 220, left = 42, right = 12, top = 14, bottom = 36;
-  const max = Math.max(1, ...points.map(p => cumulative ? p.total : p.count));
+function chart(points) {
+  const width = 960, height = 240, left = 42, right = 42, top = 24, bottom = 36;
+  const dailyMax = Math.max(1, ...points.map(p => p.count));
+  const totalMax = Math.max(1, points.at(-1).total);
+  const average = points.at(-1).total / points.length;
   const plotWidth = width - left - right, plotHeight = height - top - bottom;
   const x = i => left + (i + .5) * plotWidth / points.length;
-  const y = value => top + plotHeight * (1 - value / max);
-  const grid = [0, .5, 1].map(n => `<line x1="${left}" x2="${width-right}" y1="${y(max*n)}" y2="${y(max*n)}" class="grid"/><text x="${left-10}" y="${y(max*n)+4}" text-anchor="end">${Number((max*n).toFixed(1))}</text>`).join('');
-  const marks = cumulative
-    ? `<polyline class="line" points="${points.map((p,i) => `${x(i)},${y(p.total)}`).join(' ')}"/>${points.length === 1 ? `<circle class="line-point" cx="${x(0)}" cy="${y(points[0].total)}" r="4"/>` : ''}`
-    : points.map((p,i) => `<rect class="bar" x="${x(i)-Math.min(10,plotWidth/points.length*.35)}" y="${y(p.count)}" width="${Math.min(20,plotWidth/points.length*.7)}" height="${top+plotHeight-y(p.count)}"><title>${p.date}: ${p.count}</title></rect>`).join('');
-  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${cumulative ? 'Cumulative' : 'Daily'} ${metric.value} pull request counts. A data table follows the charts.">${grid}${marks}<text x="${left}" y="${height-8}">${points[0].date}</text><text x="${width-right}" y="${height-8}" text-anchor="end">${points.at(-1).date}</text></svg>`;
+  const y = (value, max) => top + plotHeight * (1 - value / max);
+  const grid = [0, .5, 1].map(n => `<line x1="${left}" x2="${width-right}" y1="${y(n,1)}" y2="${y(n,1)}" class="grid"/><text x="${left-10}" y="${y(n,1)+4}" text-anchor="end">${Number((dailyMax*n).toFixed(1))}</text><text x="${width-right+10}" y="${y(n,1)+4}">${Number((totalMax*n).toFixed(1))}</text>`).join('');
+  const bars = points.map((p,i) => `<rect class="bar" x="${x(i)-Math.min(10,plotWidth/points.length*.35)}" y="${y(p.count,dailyMax)}" width="${Math.min(20,plotWidth/points.length*.7)}" height="${top+plotHeight-y(p.count,dailyMax)}"><title>${p.date}: ${p.count}</title></rect>`).join('');
+  const line = `<polyline class="line" points="${points.map((p,i) => `${x(i)},${y(p.total,totalMax)}`).join(' ')}"/>${points.length === 1 ? `<circle class="line-point" cx="${x(0)}" cy="${y(points[0].total,totalMax)}" r="4"/>` : ''}`;
+  const avg = average > 0 && average < .01 ? '<0.01' : Number(average.toFixed(2));
+  document.querySelector('#average-value').textContent = `${avg} per day`;
+  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily and cumulative ${metric.value} pull requests. Average: ${avg} per day. A data table follows the chart.">${grid}${bars}${line}<line class="average" x1="${left}" x2="${width-right}" y1="${y(average,dailyMax)}" y2="${y(average,dailyMax)}"><title>Average: ${avg} per day</title></line><text x="${left}" y="${height-8}">${points[0].date}</text><text x="${width-right}" y="${height-8}" text-anchor="end">${points.at(-1).date}</text></svg>`;
 }
 function render(data) {
   const start = new Date(`${startInput.value}T00:00:00Z`);
@@ -33,8 +36,8 @@ function render(data) {
   if (!Number.isInteger(days) || days < 1 || days > 3660) {
     overview.hidden = false;
     document.querySelector('#daily').innerHTML = '';
-    document.querySelector('#cumulative').innerHTML = '';
     document.querySelector('#counts').innerHTML = '';
+    document.querySelector('#average-value').textContent = '';
     document.querySelector('#dates').textContent = '';
     setStatus('Choose a valid date range of up to 10 years, with the start on or before the end.');
     return;
@@ -53,8 +56,7 @@ function render(data) {
   });
   document.querySelectorAll('.metric-name').forEach(node => { node.textContent = metric.value; });
   document.querySelector('#dates').textContent = `${points[0].date} to ${points.at(-1).date} (UTC)`;
-  document.querySelector('#daily').innerHTML = chart(points, false);
-  document.querySelector('#cumulative').innerHTML = chart(points, true);
+  document.querySelector('#daily').innerHTML = chart(points);
   document.querySelector('#counts').innerHTML = points.map(p => `<tr><th scope="row">${p.date}</th><td>${p.count}</td><td>${p.total}</td></tr>`).join('');
   overview.hidden = false;
   setStatus(total ? '' : `No pull requests were ${metric.value} for these filters. Choose another repository or date range.`);

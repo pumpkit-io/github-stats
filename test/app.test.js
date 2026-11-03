@@ -80,12 +80,15 @@ test('dashboard filters created and merged activity across a selected UTC date r
   assert.match(element('#counts').innerHTML, /2026-01-01<\/th><td>1<\/td><td>1/);
   assert.match(element('#counts').innerHTML, /2026-01-02<\/th><td>0<\/td><td>1/);
   assert.match(element('#counts').innerHTML, /2026-01-03<\/th><td>1<\/td><td>2/);
+  assert.match(element('#daily').innerHTML, /Average: 0\.67 per day/);
+  assert.equal(element('#average-value').textContent, '0.67 per day');
   element('#metric').value = 'merged';
   element('#metric').listeners.change();
   assert.match(element('#counts').innerHTML, /2026-01-01<\/th><td>0<\/td><td>0/);
   assert.match(element('#counts').innerHTML, /2026-01-03<\/th><td>1<\/td><td>1/);
   element('#start').value = '2026-01-03';
   element('#start').listeners.change();
+  assert.match(element('#daily').innerHTML, /Average: 1 per day/);
   assert.doesNotMatch(element('#counts').innerHTML, /2026-01-01/);
   assert.match(element('#counts').innerHTML, /2026-01-03<\/th><td>1<\/td><td>1/);
   element('#repository').value = 'two';

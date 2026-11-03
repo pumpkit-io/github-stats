@@ -22,8 +22,7 @@
         <label>From (UTC)<input id="start" type="date" min="1900-01-01" max="2100-12-31"></label>
         <label>To (UTC)<input id="end" type="date" min="1900-01-01" max="2100-12-31"></label>
       </div><p id="dates"></p>
-      <section class="chart"><div class="chart-heading"><div><h2>Daily pull requests</h2><p>Pull requests <span class="metric-name">created</span> each day</p></div><span class="key"><i class="blue"></i><span class="metric-name">Created</span></span></div><div id="daily"></div></section>
-      <section class="chart"><div class="chart-heading"><div><h2>Cumulative pull requests</h2><p>Running total within this period</p></div><span class="key"><i class="teal"></i><span class="metric-name">Created</span></span></div><div id="cumulative"></div></section>
+      <section class="chart"><div class="chart-heading"><div><h2>Pull request activity</h2><p>Daily and cumulative counts within this period</p></div><div class="legend"><span class="key"><i class="blue"></i>Daily (left axis)</span><span class="key"><i class="teal"></i>Cumulative (right axis)</span><span class="key"><i class="amber"></i>Daily average (left axis): <span id="average-value"></span></span></div></div><div id="daily"></div></section>
       <details><summary>View daily counts as a table</summary><table><thead><tr><th scope="col">Date (UTC)</th><th scope="col">Daily</th><th scope="col">Cumulative</th></tr></thead><tbody id="counts"></tbody></table></details>
     </section>
   </main>
