@@ -4,6 +4,10 @@ const overview = document.querySelector('#overview');
 const refresh = document.querySelector('#refresh');
 let lastData;
 let refreshError = '';
+let chartPoints = [];
+const chartArea = document.querySelector('#daily');
+const chartReadout = document.querySelector('#chart-readout');
+const chartWidth = 960, chartLeft = 42, chartRight = 42;
 function setStatus(message) { status.textContent = [refreshError, message].filter(Boolean).join(' '); }
 const repository = document.querySelector('#repository');
 const metric = document.querySelector('#metric');
@@ -15,7 +19,7 @@ startInput.value = defaultStart.toISOString().slice(0,10);
 endInput.value = today.toISOString().slice(0,10);
 
 function chart(points) {
-  const width = 960, height = 240, left = 42, right = 42, top = 24, bottom = 36;
+  const width = chartWidth, height = 240, left = chartLeft, right = chartRight, top = 24, bottom = 36;
   const dailyMax = Math.max(1, ...points.map(p => p.count));
   const totalMax = Math.max(1, points.at(-1).total);
   const average = points.at(-1).total / points.length;
@@ -29,7 +33,23 @@ function chart(points) {
   document.querySelector('#average-value').textContent = `${avg} per day`;
   return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily and cumulative ${metric.value} pull requests. Average: ${avg} per day. A data table follows the chart.">${grid}${bars}${line}<line class="average" x1="${left}" x2="${width-right}" y1="${y(average,dailyMax)}" y2="${y(average,dailyMax)}"><title>Average: ${avg} per day</title></line><text x="${left}" y="${height-8}">${points[0].date}</text><text x="${width-right}" y="${height-8}" text-anchor="end">${points.at(-1).date}</text></svg>`;
 }
+function showChartDay(event) {
+  const bounds = chartArea.getBoundingClientRect();
+  const position = (event.clientX - bounds.left) * chartWidth / bounds.width;
+  if (!chartPoints.length || position < chartLeft || position > chartWidth - chartRight) {
+    chartReadout.textContent = '';
+    return;
+  }
+  const index = Math.min(chartPoints.length - 1, Math.floor((position - chartLeft) / (chartWidth - chartLeft - chartRight) * chartPoints.length));
+  const point = chartPoints[index];
+  chartReadout.textContent = `${point.date} (UTC): Daily ${point.count}, cumulative ${point.total}, average ${document.querySelector('#average-value').textContent}`;
+}
+chartArea.addEventListener('pointermove', showChartDay);
+chartArea.addEventListener('pointerdown', showChartDay);
+chartArea.addEventListener('pointerleave', event => { if (event.pointerType !== 'touch') chartReadout.textContent = ''; });
 function render(data) {
+  chartPoints = [];
+  chartReadout.textContent = '';
   const start = new Date(`${startInput.value}T00:00:00Z`);
   const end = new Date(`${endInput.value}T00:00:00Z`);
   const days = (end - start) / 86400000 + 1;
@@ -56,7 +76,8 @@ function render(data) {
   });
   document.querySelectorAll('.metric-name').forEach(node => { node.textContent = metric.value; });
   document.querySelector('#dates').textContent = `${points[0].date} to ${points.at(-1).date} (UTC)`;
-  document.querySelector('#daily').innerHTML = chart(points);
+  chartPoints = points;
+  chartArea.innerHTML = chart(points);
   document.querySelector('#counts').innerHTML = points.map(p => `<tr><th scope="row">${p.date}</th><td>${p.count}</td><td>${p.total}</td></tr>`).join('');
   overview.hidden = false;
   setStatus(total ? '' : `No pull requests were ${metric.value} for these filters. Choose another repository or date range.`);

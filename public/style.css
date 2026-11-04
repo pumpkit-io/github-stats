@@ -5,3 +5,5 @@
 .line-point{fill:#16877f}
 
 .legend{display:flex;flex-wrap:wrap;gap:8px 16px}.amber{background:#a15c00}.average{stroke:#a15c00;stroke-width:2;stroke-dasharray:6 4}
+
+#chart-readout{min-height:1.6em;margin:8px 0 0;font-size:.85rem;color:#20334a}

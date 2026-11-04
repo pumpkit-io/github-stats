@@ -82,6 +82,13 @@ test('dashboard filters created and merged activity across a selected UTC date r
   assert.match(element('#counts').innerHTML, /2026-01-03<\/th><td>1<\/td><td>2/);
   assert.match(element('#daily').innerHTML, /Average: 0\.67 per day/);
   assert.equal(element('#average-value').textContent, '0.67 per day');
+  element('#daily').getBoundingClientRect = () => ({left:0, width:960});
+  element('#daily').listeners.pointermove({clientX:480});
+  assert.equal(element('#chart-readout').textContent, '2026-01-02 (UTC): Daily 0, cumulative 1, average 0.67 per day');
+  element('#daily').listeners.pointerleave({pointerType:'touch'});
+  assert.match(element('#chart-readout').textContent, /2026-01-02/);
+  element('#daily').listeners.pointerleave({pointerType:'mouse'});
+  assert.equal(element('#chart-readout').textContent, '');
   element('#metric').value = 'merged';
   element('#metric').listeners.change();
   assert.match(element('#counts').innerHTML, /2026-01-01<\/th><td>0<\/td><td>0/);
@@ -89,6 +96,8 @@ test('dashboard filters created and merged activity across a selected UTC date r
   element('#start').value = '2026-01-03';
   element('#start').listeners.change();
   assert.match(element('#daily').innerHTML, /Average: 1 per day/);
+  element('#daily').listeners.pointermove({clientX:480});
+  assert.equal(element('#chart-readout').textContent, '2026-01-03 (UTC): Daily 1, cumulative 1, average 1 per day');
   assert.doesNotMatch(element('#counts').innerHTML, /2026-01-01/);
   assert.match(element('#counts').innerHTML, /2026-01-03<\/th><td>1<\/td><td>1/);
   element('#repository').value = 'two';
